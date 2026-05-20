@@ -256,6 +256,34 @@ const Auth = {
               </div>
             </div>
 
+            
+            <!-- SIGNUP - VERIFY -->
+            <div class="auth-view" id="view-signup-verify">
+              <div class="auth-header" style="justify-content: flex-start; padding-bottom: 24px; border-bottom: none;">
+                <h3 style="margin: 0; font-family: 'Inter', sans-serif; font-size: 18px; font-weight: 500; color: #333;">Verify your email</h3>
+              </div>
+              
+              <div class="auth-body" style="padding-top: 0; display: flex; flex-direction: column; flex-grow: 1;">
+                <p style="font-size: 14px; color: #555; margin-bottom: 24px; line-height: 1.5;">Please enter the 6-digit code sent to <span id="signupVerifyEmail" style="color: #333; font-weight: 500;"></span></p>
+                
+                <form onsubmit="Auth.handleSignupVerify(event)" style="display: flex; flex-direction: column; flex-grow: 1; width: 100%;">
+                  <div class="otp-container" style="width: 100%; justify-content: space-between;">
+                    <input type="text" maxlength="1" class="otp-box" style="flex: 1; max-width: 45px;" required oninput="Auth.handleOtpInput(this, 1, 'signup')" onkeydown="Auth.handleOtpKeydown(event, this, 1, 'signup')" onpaste="Auth.handleOtpPaste(event, 'signup')" onfocus="this.select()">
+                    <input type="text" maxlength="1" class="otp-box" style="flex: 1; max-width: 45px;" required oninput="Auth.handleOtpInput(this, 2, 'signup')" onkeydown="Auth.handleOtpKeydown(event, this, 2, 'signup')" onpaste="Auth.handleOtpPaste(event, 'signup')" onfocus="this.select()">
+                    <input type="text" maxlength="1" class="otp-box" style="flex: 1; max-width: 45px;" required oninput="Auth.handleOtpInput(this, 3, 'signup')" onkeydown="Auth.handleOtpKeydown(event, this, 3, 'signup')" onpaste="Auth.handleOtpPaste(event, 'signup')" onfocus="this.select()">
+                    <input type="text" maxlength="1" class="otp-box" style="flex: 1; max-width: 45px;" required oninput="Auth.handleOtpInput(this, 4, 'signup')" onkeydown="Auth.handleOtpKeydown(event, this, 4, 'signup')" onpaste="Auth.handleOtpPaste(event, 'signup')" onfocus="this.select()">
+                    <input type="text" maxlength="1" class="otp-box" style="flex: 1; max-width: 45px;" required oninput="Auth.handleOtpInput(this, 5, 'signup')" onkeydown="Auth.handleOtpKeydown(event, this, 5, 'signup')" onpaste="Auth.handleOtpPaste(event, 'signup')" onfocus="this.select()">
+                    <input type="text" maxlength="1" class="otp-box" style="flex: 1; max-width: 45px;" required oninput="Auth.handleOtpInput(this, 6, 'signup')" onkeydown="Auth.handleOtpKeydown(event, this, 6, 'signup')" onpaste="Auth.handleOtpPaste(event, 'signup')" onfocus="this.select()">
+                  </div>
+                  
+                  <div style="display: flex; gap: 12px; margin-top: auto; padding-bottom: 16px; width: 100%;">
+                    <button type="button" class="btn-forgot-action outline" style="flex: 1;" onclick="Auth.showSignup(event)">Back</button>
+                    <button type="submit" class="btn-forgot-action solid" style="flex: 1;">Verify</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+
             <!-- FORGOT PASSWORD - REQUEST -->
             <div class="auth-view" id="view-forgot-request">
               <div class="auth-header" style="justify-content: flex-start; padding-bottom: 24px; border-bottom: none;">
@@ -493,6 +521,12 @@ const Auth = {
     setTimeout(() => {
       document.getElementById('view-login').classList.add('active');
     }, e !== null ? 600 : 0);
+  },
+
+  showSignupVerify(e) {
+    if (e) e.preventDefault();
+    document.querySelectorAll('.auth-view').forEach(v => v.classList.remove('active'));
+    document.getElementById('view-signup-verify').classList.add('active');
   },
 
   showForgotRequest(e) {

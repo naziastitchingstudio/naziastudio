@@ -6,6 +6,7 @@ const forgotPassword = require('../lib/auth/forgot-password');
 const forgotPasswordVerify = require('../lib/auth/forgot-password-verify');
 const forgotPasswordReset = require('../lib/auth/forgot-password-reset');
 const whatsappVerify = require('../lib/auth/whatsapp-verify');
+const signupOtpSend = require('../lib/auth/signup-otp-send');
 
 module.exports = async (req, res) => {
   // Vercel rewrites will inject the matched action into req.query.action
@@ -24,6 +25,7 @@ module.exports = async (req, res) => {
     case 'forgot-password-verify': return forgotPasswordVerify(req, res);
     case 'forgot-password-reset': return forgotPasswordReset(req, res);
     case 'whatsapp-verify': return whatsappVerify(req, res);
+    case 'signup-otp-send': return signupOtpSend(req, res);
     default:
       return res.status(404).json({ error: `Auth action '${action}' not found` });
   }
