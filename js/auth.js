@@ -58,8 +58,9 @@ window.ShowAlert = function(message) {
     overlay.style.opacity = '0';
     box.style.transform = 'scale(0.9) translateY(20px)';
     box.style.opacity = '0';
-    setTimeout(() => document.body.removeChild(overlay), 300);
+    setTimeout(() => { if (document.body.contains(overlay)) document.body.removeChild(overlay); }, 300);
   };
+  window.CloseAlert = close;
   btn.onclick = close;
   overlay.onclick = (e) => { if(e.target === overlay) close(); };
 };
@@ -162,7 +163,7 @@ const Auth = {
                     <button type="submit" class="auth-submit">LOGIN</button>
                     
                     <div class="auth-footer">
-                      Don't have an account? <a href="#" class="auth-link" onclick="Auth.showSignup(event)">Sign up</a>
+                      Don't have an account? <a href="#" class="auth-link" onclick="Auth.showSignup(event); if(window.CloseAlert) window.CloseAlert();">Sign up</a>
                     </div>
                   </form>
                 </div>
@@ -190,7 +191,7 @@ const Auth = {
                     </button>
                     
                     <div class="auth-footer">
-                      Don't have an account? <a href="#" class="auth-link" onclick="Auth.showSignup(event)">Sign up</a>
+                      Don't have an account? <a href="#" class="auth-link" onclick="Auth.showSignup(event); if(window.CloseAlert) window.CloseAlert();">Sign up</a>
                     </div>
                   </form>
                 </div>
@@ -239,7 +240,7 @@ const Auth = {
                     </button>
                     
                     <div class="auth-footer">
-                      Already have an account? <a href="#" class="auth-link" onclick="Auth.showLogin(event)">Log in Now</a>
+                      Already have an account? <a href="#" class="auth-link" onclick="Auth.showLogin(event); if(window.CloseAlert) window.CloseAlert();">Log in Now</a>
                     </div>
                   </form>
                 </div>
@@ -280,7 +281,7 @@ const Auth = {
                   </div>
                   
                   <div style="display: flex; gap: 12px; margin-top: auto; padding-bottom: 16px; width: 100%;">
-                    <button type="button" class="btn-forgot-action outline" style="flex: 1;" onclick="Auth.showSignup(event)">Back</button>
+                    <button type="button" class="btn-forgot-action outline" style="flex: 1;" onclick="Auth.showSignup(event); if(window.CloseAlert) window.CloseAlert();">Back</button>
                     <button type="submit" class="btn-forgot-action solid" style="flex: 1;">Verify</button>
                   </div>
                 </form>
@@ -302,7 +303,7 @@ const Auth = {
                   </div>
                   
                   <div style="display: flex; gap: 12px; margin-top: auto; padding-bottom: 16px; width: 100%;">
-                    <button type="button" class="btn-forgot-action outline" style="flex: 1;" onclick="Auth.showLogin(event)">Back</button>
+                    <button type="button" class="btn-forgot-action outline" style="flex: 1;" onclick="Auth.showLogin(event); if(window.CloseAlert) window.CloseAlert();">Back</button>
                     <button type="submit" class="btn-forgot-action solid" style="flex: 1;">Confirm</button>
                   </div>
                 </form>
@@ -788,55 +789,29 @@ const Auth = {
     this.setLoading(btn, true);
 
     this.forgotContext = { account: input };
-    const isEmail = input.includes('@');
 
     try {
-
-    if (isEmail) {
-      try {
-        const res = await fetch('/api/auth-handler?action=forgot-password', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: input })
-        });
-        const data = await res.json();
-        
-        if (res.ok && data.success) {
-          document.getElementById('forgotVerifyTarget').innerText = input;
-          document.getElementById('forgotVerifyEmail').innerText = input;
-          this.showForgotVerify(null);
+      const res = await fetch('/api/auth-handler?action=forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: input })
+      });
+      const data = await res.json();
+      
+      if (res.ok && data.success) {
+        if (data.method === 'whatsapp') {
+           window.ShowAlert(`${data.message}<br><br><a href="https://wa.me/923008771713?text=Hi, I need to reset my password for phone number: ${input}" target="_blank" style="background: #25D366; color: white; padding: 10px 20px; border-radius: 4px; text-decoration: none; display: inline-block; margin-top: 15px;">Reset via WhatsApp</a>`);
         } else {
-          window.ShowAlert(data.error || "Failed to send reset link.");
+           document.getElementById('forgotVerifyTarget').innerText = input;
+           document.getElementById('forgotVerifyEmail').innerText = input;
+           this.showForgotVerify(null);
         }
-      } catch(err) {
-        window.ShowAlert("Network error occurred.");
+      } else {
+        window.ShowAlert(data.error || "Failed to send reset request.");
       }
-    } else {
-      // It's a Phone Number - Use Firebase Phone Auth
-      this.setupRecaptcha();
-      try {
-        // Format number if needed
-        const phoneNumber = this.formatPhoneNumber(input);
-        const confirmationResult = await firebase.auth().signInWithPhoneNumber(phoneNumber, window.recaptchaVerifier);
-        
-        // Save confirmation result to verify later
-        window.confirmationResult = confirmationResult;
-        
-        document.getElementById('forgotVerifyTarget').innerText = phoneNumber;
-        document.getElementById('forgotVerifyEmail').innerText = phoneNumber;
-        this.showForgotVerify(null);
-        
-      } catch (error) {
-        console.error("Firebase SMS Error:", error);
-        window.ShowAlert("Failed to send SMS. Please check the phone number format (e.g. +92...).");
-        // Reset recaptcha if failed
-        if (window.recaptchaVerifier) {
-          window.recaptchaVerifier.render().then(function(widgetId) {
-            grecaptcha.reset(widgetId);
-          });
-        }
-      }
-    } } finally {
+    } catch(err) {
+      window.ShowAlert("Network error occurred.");
+    } finally {
       this.setLoading(btn, false);
     }
   },
@@ -1027,7 +1002,7 @@ const Auth = {
         window.location.href = '/portal.html';
       } else {
         if (data.error === 'NOT_FOUND') {
-          window.ShowAlert(`The email or phone number you entered is not yet registered. Please sign up to register yourself.<br><br><button onclick="Auth.showSignup(event)" style="background: var(--c-gold); color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin-top: 15px;">Go to Sign Up</button>`);
+          window.ShowAlert(`The email or phone number you entered is not yet registered. Please sign up to register yourself.<br><br><button onclick="Auth.showSignup(event); if(window.CloseAlert) window.CloseAlert();" style="background: var(--c-gold); color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin-top: 15px;">Go to Sign Up</button>`);
         } else if (data.error === 'WRONG_PASSWORD') {
           window.ShowAlert("Incorrect password. Please try again.");
         } else {
@@ -1103,7 +1078,7 @@ const Auth = {
           this.showSignupVerify(null);
           this.startSignupResendTimer();
         } else if (data.error === 'ALREADY_EXISTS') {
-          window.ShowAlert(`This email is already registered.<br><br><button onclick="Auth.showLogin(event)" style="background: var(--c-gold); color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin-top: 15px;">Go to Sign in</button>`);
+          window.ShowAlert(`This email is already registered.<br><br><button onclick="Auth.showLogin(event); if(window.CloseAlert) window.CloseAlert();" style="background: var(--c-gold); color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin-top: 15px;">Go to Sign in</button>`);
         } else {
           window.ShowAlert(data.error || 'Failed to send verification code.');
         }
@@ -1129,7 +1104,7 @@ const Auth = {
              window.location.href = '/portal.html';
           }
         } else if (data.error === 'ALREADY_EXISTS') {
-          window.ShowAlert(`This phone number is already registered.<br><br><button onclick="Auth.showLogin(event)" style="background: var(--c-gold); color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin-top: 15px;">Go to Sign in</button>`);
+          window.ShowAlert(`This phone number is already registered.<br><br><button onclick="Auth.showLogin(event); if(window.CloseAlert) window.CloseAlert();" style="background: var(--c-gold); color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin-top: 15px;">Go to Sign in</button>`);
         } else {
           window.ShowAlert(data.error || 'Registration Failed');
         }
@@ -1141,6 +1116,52 @@ const Auth = {
     }
   },
 
+
+  async handleSignupVerify(e) {
+    e.preventDefault();
+    const btn = e.target.querySelector('button[type="submit"]');
+    
+    // Get OTP from inputs
+    const view = document.getElementById('view-signup-verify');
+    const inputs = view.querySelectorAll('.otp-box');
+    let otp = '';
+    inputs.forEach(input => otp += input.value);
+    
+    if (otp.length !== 6) {
+      window.ShowAlert('Please enter the full 6-digit verification code.');
+      return;
+    }
+
+    this.setLoading(btn, true);
+
+    const payload = { ...this.signupPayload, otp: otp };
+
+    try {
+      const res = await fetch('/api/auth-handler?action=register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      
+      if (res.ok && data.success) {
+        this.currentUser = data.user;
+        localStorage.setItem('currentUser', JSON.stringify(this.currentUser));
+        document.dispatchEvent(new CustomEvent('authStateChanged', { detail: this.currentUser }));
+        window.ShowAlert('Registration Successful! Welcome ' + this.currentUser.name);
+        window.location.href = '/portal.html';
+      } else {
+        window.ShowAlert(data.error || "Incorrect OTP. Please enter a valid OTP.");
+        const inputs = document.getElementById('view-signup-verify').querySelectorAll('.otp-box');
+        inputs.forEach(input => input.value = '');
+        inputs[0].focus();
+      }
+    } catch(err) {
+      window.ShowAlert("Network error occurred during verification.");
+    } finally {
+      this.setLoading(btn, false);
+    }
+  },
   checkVerification() {
     if (this.currentUser && !this.currentUser.isVerified) {
       this.showVerificationModal();
