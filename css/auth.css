@@ -133,6 +133,7 @@
 .auth-body {
   padding: 24px;
   display: grid;
+  flex: 1;
   grid-template-columns: 1fr;
   align-items: start;
 }

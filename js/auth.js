@@ -1,28 +1,4 @@
-// Load Firebase SDK for Phone Auth
-(function() {
-  const script1 = document.createElement('script');
-  script1.src = 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js';
-  document.head.appendChild(script1);
-
-  const script2 = document.createElement('script');
-  script2.src = 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js';
-  document.head.appendChild(script2);
-
-  script2.onload = () => {
-    // IMPORTANT: Replace this placeholder config with your real Firebase Project Config!
-    const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "your-project-id.firebaseapp.com",
-      projectId: "your-project-id",
-      storageBucket: "your-project-id.appspot.com",
-      messagingSenderId: "YOUR_SENDER_ID",
-      appId: "YOUR_APP_ID"
-    };
-    if (!firebase.apps.length) {
-      firebase.initializeApp(firebaseConfig);
-    }
-  };
-})();
+// Removed Firebase
 
 // Global Custom Alert
 window.ShowAlert = function(message) {
@@ -239,20 +215,18 @@ const Auth = {
               
               <div class="auth-body">
                 <div id="pane-signup">
-                  <form onsubmit="Auth.simulateSignup(event)">
-                    <div class="phone-input-wrapper">
-                      <div class="custom-country-select" onclick="Auth.toggleCountryDropdown(this)">
-                        <span class="selected-flag">🇵🇰</span>
-                        <span class="dropdown-arrow">▼</span>
-                        <ul class="country-dropdown-list">
-                          <li onclick="Auth.selectCountry(event, '+92', '🇵🇰')">🇵🇰 Pakistan (+92)</li>
-                          <li onclick="Auth.selectCountry(event, '+1', '🇺🇸')">🇺🇸 United States (+1)</li>
-                          <li onclick="Auth.selectCountry(event, '+44', '🇬🇧')">🇬🇧 United Kingdom (+44)</li>
-                          <li onclick="Auth.selectCountry(event, '+971', '🇦🇪')">🇦🇪 UAE (+971)</li>
-                          <li onclick="Auth.selectCountry(event, '+61', '🇦🇺')">🇦🇺 Australia (+61)</li>
-                        </ul>
-                      </div>
-                      <input type="tel" id="signupPhone" class="phone-input" value="+92 " placeholder="Phone number" required>
+                  <form onsubmit="Auth.registerUser(event)">
+                    <div class="auth-input-group" style="margin-bottom: 16px;">
+                      <input type="text" id="signupName" class="auth-input" placeholder="Please enter your Name" required>
+                    </div>
+                    <div class="auth-input-group" style="margin-bottom: 16px;">
+                      <input type="text" id="signupIdentifier" class="auth-input" placeholder="Please enter your Phone or Email" required>
+                    </div>
+                    <div class="auth-input-group">
+                      <input type="password" id="signupPassword" class="auth-input" placeholder="Please enter your password" required>
+                      <button type="button" class="auth-eye" onclick="Auth.togglePassword('signupPassword')">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 36 36" width="24" height="24" stroke="currentColor" stroke-width="2.54" stroke-linecap="round" stroke-linejoin="round"><path d="M32.711 11c-3.166 4.841-8.573 8.03-14.71 8.03-6.139 0-11.546-3.189-14.712-8.03M9.79 17.5l-3 5m8.5-3-1 5.5m12.5-7.5 3 5m-8.5-3 1 5.5"></path></svg>
+                      </button>
                     </div>
                     
                     <label style="font-size: 12px; color: #666; display: flex; align-items: flex-start; gap: 8px; margin-bottom: 16px;">
@@ -261,7 +235,7 @@ const Auth = {
                     </label>
                     
                     <button type="submit" class="auth-submit" style="display: flex; align-items: center; justify-content: center; gap: 8px;">
-                      Send SMS Code
+                      SIGN UP
                     </button>
                     
                     <div class="auth-footer">
@@ -954,48 +928,87 @@ const Auth = {
     }
   },
 
-  async simulateSignup(e) {
+  async registerUser(e) {
     e.preventDefault();
-    const phoneInput = document.getElementById('signupPhone').value;
-    await this.processWhatsapp(phoneInput);
-  },
+    const name = document.getElementById('signupName').value;
+    const identifier = document.getElementById('signupIdentifier').value;
+    const password = document.getElementById('signupPassword').value;
 
-  async sendCode(e) {
-    e.preventDefault();
-    const phoneInput = document.getElementById('authPhone').value;
-    await this.processWhatsapp(phoneInput);
-  },
-
-  async processWhatsapp(phone) {
-    if (!phone || phone.trim().length < 5) {
-      window.ShowAlert("Please enter a valid phone number.");
+    if (!name || !identifier || !password) {
+      window.ShowAlert('All fields are required.');
       return;
     }
-    
-    this.setupRecaptcha();
-    
+
+    const btn = e.target.querySelector('button[type="submit"]');
+    this.setLoading(btn, true);
+
+    const isEmail = identifier.includes('@');
+    const payload = {
+      name: name,
+      password: password
+    };
+
+    if (isEmail) {
+      payload.email = identifier;
+    } else {
+      payload.phone = this.formatPhoneNumber(identifier);
+    }
+
     try {
-      const phoneNumber = this.formatPhoneNumber(phone);
-      const confirmationResult = await firebase.auth().signInWithPhoneNumber(phoneNumber, window.recaptchaVerifier);
+      const res = await fetch('/api/auth-handler?action=register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
       
-      // We will re-use the forgot-verify screen for entering the OTP for signup/login as well
-      // This creates a unified experience.
-      window.confirmationResult = confirmationResult;
-      
-      this.forgotContext = { account: phoneNumber, isSignupLogin: true };
-      
-      document.getElementById('forgotVerifyTarget').innerText = phoneNumber;
-      document.getElementById('forgotVerifyEmail').innerText = phoneNumber;
-      this.showForgotVerify(null);
-      
-    } catch (error) {
-      console.error("Firebase SMS Error:", error);
-      window.ShowAlert("Failed to send SMS. Please check the phone number format (e.g. +92...).");
-      if (window.recaptchaVerifier) {
-        window.recaptchaVerifier.render().then(function(widgetId) {
-          grecaptcha.reset(widgetId);
-        });
+      if (res.ok && data.success) {
+        this.currentUser = data.user;
+        localStorage.setItem('currentUser', JSON.stringify(this.currentUser));
+        window.ShowAlert('Registration Successful! Welcome ' + this.currentUser.name);
+        this.closeModal();
+        this.checkAuth();
+        
+        if (!this.currentUser.isVerified) {
+           this.checkVerification();
+        } else {
+           window.location.href = '/portal.html';
+        }
+      } else {
+        window.ShowAlert(data.error || 'Registration Failed');
       }
+    } catch(err) {
+      window.ShowAlert("Network error occurred during registration.");
+    } finally {
+      this.setLoading(btn, false);
+    }
+  },
+
+  checkVerification() {
+    if (this.currentUser && !this.currentUser.isVerified) {
+      this.showVerificationModal();
+    }
+  },
+
+  showVerificationModal() {
+    let vModal = document.getElementById('verificationModal');
+    if (!vModal) {
+      vModal = document.createElement('div');
+      vModal.id = 'verificationModal';
+      vModal.style.cssText = `
+        position: fixed; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px);
+        z-index: 9999; display: flex; align-items: center; justify-content: center;
+      `;
+      const accountIdentifier = this.currentUser.email || this.currentUser.phone || "my account";
+      vModal.innerHTML = `
+        <div style="background: white; padding: 32px; border-radius: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); width: 90%; max-width: 400px; text-align: center;">
+          <h3 style="margin-top:0;">WhatsApp Verification Required</h3>
+          <p style="color: #666; line-height: 1.5; margin-bottom: 24px;">Your account needs to be verified by our team before you can place orders. Please click below to send us a message on WhatsApp so we can verify your account.</p>
+          <a href="https://wa.me/923000000000?text=Hi, I would like to verify my account. Email/Phone: ${accountIdentifier}" target="_blank" style="background: #25D366; color: white; border: none; border-radius: 8px; padding: 12px 24px; font-size: 14px; font-weight: bold; cursor: pointer; display: inline-block; text-decoration: none; width: 100%; box-sizing: border-box; margin-bottom: 12px;">Verify via WhatsApp</a>
+          <button onclick="document.getElementById('verificationModal').remove()" style="background: transparent; color: #666; border: none; cursor: pointer; text-decoration: underline; padding: 8px;">I'll do it later</button>
+        </div>
+      `;
+      document.body.appendChild(vModal);
     }
   },
 
@@ -1049,16 +1062,16 @@ const Auth = {
           setTimeout(() => drop.classList.add('active'), 10);
         };
       });
-      cartBtns.forEach(btn => btn.style.display = 'inline-flex');
+      cartBtns.forEach(btn => btn.style.display = '');
     } else {
       // User is NOT logged in
       loginBtns.forEach(btn => {
         btn.textContent = 'Login';
-        btn.onclick = () => Auth.openModal();
+        btn.onclick = (e) => { e.preventDefault(); Auth.openModal(); };
         btn.title = "";
       });
       // Do not completely hide cart btns, because we want them to trigger the login modal when clicked
-      cartBtns.forEach(btn => btn.style.display = 'inline-flex');
+      cartBtns.forEach(btn => btn.style.display = '');
     }
 
     if (typeof Cart !== 'undefined') {
@@ -1074,3 +1087,5 @@ const Auth = {
 document.addEventListener('DOMContentLoaded', () => {
   Auth.init();
 });
+
+

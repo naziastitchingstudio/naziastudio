@@ -214,7 +214,7 @@
 </head>
 <body>
   <!-- PRELOADER -->
-  <div id="preloader" style="display: none;">
+  <div id="preloader" >
     <div class="preloader-bg"></div>
     <div class="preloader-content" id="preloader-content">
       <div class="preloader-crest" id="preloader-crest">
@@ -365,11 +365,11 @@
       <a href="portal.html" class="nav-link">Portal</a>
       <a href="contact.html" class="nav-link">Contact</a>
       <button class="btn btn-orange hide-desktop nav-login-btn" style="margin-top: 1rem; width: 100%;" onclick="Auth.openModal()">Login</button>
-      <a href="cart.html" class="btn btn-outline-gold hide-desktop nav-cart-btn" style="margin-top: 1rem; display: none;">Cart (0)</a>
+      <a href="cart.html" class="btn btn-outline-gold hide-desktop nav-cart-btn" style="margin-top: 1rem;">Cart (0)</a>
     </div>
     <div class="flex items-center gap-4">
       <button class="btn btn-orange hide-mobile nav-login-btn" onclick="Auth.openModal()">Login</button>
-      <a href="cart.html" class="btn btn-outline-gold hide-mobile nav-cart-btn" style="display: none;">Cart (0)</a>
+      <a href="cart.html" class="btn btn-outline-gold hide-mobile nav-cart-btn" >Cart (0)</a>
       <button class="menu-toggle"><span></span><span></span><span></span></button>
     </div>
   </nav>
@@ -616,22 +616,7 @@
   <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
   <script src="js/main.js"></script>
   <script src="js/cart.js"></script>
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyCl89z87NDMcgUaBKroGd5r8QiQAh9peWw",
-      authDomain: "nazia-studio-phone-auth.firebaseapp.com",
-      projectId: "nazia-studio-phone-auth",
-      storageBucket: "nazia-studio-phone-auth.firebasestorage.app",
-      messagingSenderId: "175360062819",
-      appId: "1:175360062819:web:d683e570148b4ac4728f56"
-    };
-    if (typeof firebase !== 'undefined' && !firebase.apps.length) {
-      firebase.initializeApp(firebaseConfig);
-    }
-  </script>
+  
   <script src="js/auth.js"></script>
   <script src="js/chatbot.js"></script>
 </body>
