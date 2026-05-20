@@ -275,6 +275,9 @@ const Auth = {
                     <input type="text" maxlength="1" class="otp-box" style="flex: 1; max-width: 45px;" required oninput="Auth.handleOtpInput(this, 5, 'signup')" onkeydown="Auth.handleOtpKeydown(event, this, 5, 'signup')" onpaste="Auth.handleOtpPaste(event, 'signup')" onfocus="this.select()">
                     <input type="text" maxlength="1" class="otp-box" style="flex: 1; max-width: 45px;" required oninput="Auth.handleOtpInput(this, 6, 'signup')" onkeydown="Auth.handleOtpKeydown(event, this, 6, 'signup')" onpaste="Auth.handleOtpPaste(event, 'signup')" onfocus="this.select()">
                   </div>
+                  <div style="font-size: 14px; color: #999; margin-top: 16px;" id="signupResendWrapper">
+                    Resend OTP in <span id="signupResendTimer" style="color: #00bcd4; font-weight: bold;">60</span> s
+                  </div>
                   
                   <div style="display: flex; gap: 12px; margin-top: auto; padding-bottom: 16px; width: 100%;">
                     <button type="button" class="btn-forgot-action outline" style="flex: 1;" onclick="Auth.showSignup(event)">Back</button>
@@ -527,6 +530,58 @@ const Auth = {
     if (e) e.preventDefault();
     document.querySelectorAll('.auth-view').forEach(v => v.classList.remove('active'));
     document.getElementById('view-signup-verify').classList.add('active');
+  },
+
+  startSignupResendTimer() {
+    let timeLeft = 60;
+    const timerElement = document.getElementById('signupResendTimer');
+    const wrapper = document.getElementById('signupResendWrapper');
+    
+    if (!timerElement || !wrapper) return;
+    
+    wrapper.innerHTML = `Resend OTP in <span id="signupResendTimer" style="color: #00bcd4; font-weight: bold;">${timeLeft}</span> s`;
+    
+    if (this.signupTimerInterval) clearInterval(this.signupTimerInterval);
+    
+    this.signupTimerInterval = setInterval(() => {
+      timeLeft--;
+      const el = document.getElementById('signupResendTimer');
+      if (el) el.innerText = timeLeft;
+      
+      if (timeLeft <= 0) {
+        clearInterval(this.signupTimerInterval);
+        wrapper.innerHTML = `<a href="#" onclick="Auth.resendSignupOtp(event)" style="color: var(--c-gold); font-weight: 500; text-decoration: none;">Resend OTP</a>`;
+      }
+    }, 1000);
+  },
+  
+  async resendSignupOtp(e) {
+    if (e) e.preventDefault();
+    const email = this.signupPayload.email;
+    if (!email) return;
+    
+    const wrapper = document.getElementById('signupResendWrapper');
+    wrapper.innerHTML = `Sending...`;
+    
+    try {
+      const res = await fetch('/api/auth-handler?action=signup-otp-send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email })
+      });
+      const data = await res.json();
+      
+      if (res.ok && data.success) {
+        window.ShowAlert("OTP Resent Successfully!");
+        this.startSignupResendTimer();
+      } else {
+        window.ShowAlert(data.error || 'Failed to resend verification code.');
+        wrapper.innerHTML = `<a href="#" onclick="Auth.resendSignupOtp(event)" style="color: var(--c-gold); font-weight: 500; text-decoration: none;">Resend OTP</a>`;
+      }
+    } catch(err) {
+      window.ShowAlert("Network error occurred.");
+      wrapper.innerHTML = `<a href="#" onclick="Auth.resendSignupOtp(event)" style="color: var(--c-gold); font-weight: 500; text-decoration: none;">Resend OTP</a>`;
+    }
   },
 
   showForgotRequest(e) {
@@ -971,7 +1026,13 @@ const Auth = {
         this.checkAuth();
         window.location.href = '/portal.html';
       } else {
-        window.ShowAlert(data.error || 'Login API Failed: ' + JSON.stringify(data));
+        if (data.error === 'NOT_FOUND') {
+          window.ShowAlert(`The email or phone number you entered is not yet registered. Please sign up to register yourself.<br><br><button onclick="Auth.showSignup(event)" style="background: var(--c-gold); color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin-top: 15px;">Go to Sign Up</button>`);
+        } else if (data.error === 'WRONG_PASSWORD') {
+          window.ShowAlert("Incorrect password. Please try again.");
+        } else {
+          window.ShowAlert(data.error || 'Login API Failed: ' + JSON.stringify(data));
+        }
       }
     } catch(err) {
       window.ShowAlert("Network error occurred during login: " + err.message);
