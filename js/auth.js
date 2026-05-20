@@ -890,6 +890,24 @@ const Auth = {
     const btn = e.target.querySelector('button[type="submit"]');
     this.setLoading(btn, true);
 
+    // Validate identifier format
+    const hasLetters = /[a-zA-Z]/.test(email);
+    if (hasLetters) {
+       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+       if (!emailRegex.test(email)) {
+          window.ShowAlert("Please enter a valid email address.");
+          this.setLoading(btn, false);
+          return;
+       }
+    } else {
+       const phoneRegex = /^[\d\+\-\s()]+$/;
+       if (!phoneRegex.test(email) || email.replace(/\D/g, '').length < 7) {
+          window.ShowAlert("Please enter a valid phone number without letters.");
+          this.setLoading(btn, false);
+          return;
+       }
+    }
+
     try {
       const res = await fetch('/api/auth-handler?action=login', {
         method: 'POST',
@@ -942,7 +960,26 @@ const Auth = {
     const btn = e.target.querySelector('button[type="submit"]');
     this.setLoading(btn, true);
 
-    const isEmail = identifier.includes('@');
+    const hasLetters = /[a-zA-Z]/.test(identifier);
+    if (hasLetters) {
+       // Must be valid email
+       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+       if (!emailRegex.test(identifier)) {
+          window.ShowAlert("Please enter a valid email address.");
+          this.setLoading(btn, false);
+          return;
+       }
+    } else {
+       // Must not contain letters (allow numbers, +, -, spaces)
+       const phoneRegex = /^[\d\+\-\s()]+$/;
+       if (!phoneRegex.test(identifier) || identifier.replace(/\D/g, '').length < 7) {
+          window.ShowAlert("Please enter a valid phone number without letters.");
+          this.setLoading(btn, false);
+          return;
+       }
+    }
+
+    const isEmail = hasLetters;
     const payload = {
       name: name,
       password: password
@@ -1004,7 +1041,7 @@ const Auth = {
         <div style="background: white; padding: 32px; border-radius: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); width: 90%; max-width: 400px; text-align: center;">
           <h3 style="margin-top:0;">WhatsApp Verification Required</h3>
           <p style="color: #666; line-height: 1.5; margin-bottom: 24px;">Your account needs to be verified by our team before you can place orders. Please click below to send us a message on WhatsApp so we can verify your account.</p>
-          <a href="https://wa.me/923000000000?text=Hi, I would like to verify my account. Email/Phone: ${accountIdentifier}" target="_blank" style="background: #25D366; color: white; border: none; border-radius: 8px; padding: 12px 24px; font-size: 14px; font-weight: bold; cursor: pointer; display: inline-block; text-decoration: none; width: 100%; box-sizing: border-box; margin-bottom: 12px;">Verify via WhatsApp</a>
+          <a href="https://wa.me/923008771713?text=Hi, I would like to verify my account. Email/Phone: ${accountIdentifier}" target="_blank" style="background: #25D366; color: white; border: none; border-radius: 8px; padding: 12px 24px; font-size: 14px; font-weight: bold; cursor: pointer; display: inline-block; text-decoration: none; width: 100%; box-sizing: border-box; margin-bottom: 12px;">Verify via WhatsApp</a>
           <button onclick="document.getElementById('verificationModal').remove()" style="background: transparent; color: #666; border: none; cursor: pointer; text-decoration: underline; padding: 8px;">I'll do it later</button>
         </div>
       `;

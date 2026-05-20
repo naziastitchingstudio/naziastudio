@@ -295,51 +295,46 @@
           subtitle.querySelectorAll('span').forEach(s => s.style.animation = '');
         }, 7000);
 
-        // Phase 4: Transition to Navbar (6 seconds after shine starts)
-        setTimeout(() => {
-          content.classList.remove('run-shine');
-          
-          // IMPORTANT: Temporarily remove filters (drop-shadows) because they artificially inflate getBoundingClientRect()
-          const originalFilter = content.style.filter;
-          content.style.filter = 'none';
-          
-          // Force opacity 1 to ensure the browser computes layout properly for measurement
+        const endPreloader = () => {
           const mainNavBrand = document.getElementById('main-nav-brand');
           if (mainNavBrand) mainNavBrand.style.opacity = '1';
-          
-          // Get target coordinates from the reliable anchor tag (which wraps the icon exactly)
-          const targetRect = mainNavBrand.getBoundingClientRect();
-          
-          // Get source coordinates
-          const sourceCrest = document.getElementById('preloader-crest');
-          const sourceRect = sourceCrest.getBoundingClientRect();
-          const contentRect = content.getBoundingClientRect();
-          
-          // Restore filter after measurement
-          content.style.filter = originalFilter;
-          
-          // Calculate precise scale using mathematically guaranteed CSS dimensions!
-          // SVG getBoundingClientRect is buggy on some browsers when initially opacity: 0.
-          const targetWidth = 44; 
-          const sourceWidth = window.innerWidth <= 768 ? 100 : 150;
-          const scaleRatio = targetWidth / sourceWidth;
-          
-          // Calculate precise translation accounting for transform-origin (top left of content)
-          const xMove = targetRect.left - (contentRect.left + (sourceRect.left - contentRect.left) * scaleRatio);
-          const yMove = targetRect.top - (contentRect.top + (sourceRect.top - contentRect.top) * scaleRatio);
-          
-          content.style.transform = `translate(${xMove}px, ${yMove}px) scale(${scaleRatio})`;
-          
-          preloader.classList.add('fade-up');
-          
-          // Cleanup
-          setTimeout(() => {
+          if (preloader.parentNode) preloader.remove();
+          sessionStorage.setItem('preloaderShown', 'true');
+        };
+
+        preloader.onclick = endPreloader;
+
+        // Phase 4: Transition to Navbar (6 seconds after shine starts)
+        setTimeout(() => {
+          try {
+            content.classList.remove('run-shine');
+            const originalFilter = content.style.filter;
+            content.style.filter = 'none';
+            
             const mainNavBrand = document.getElementById('main-nav-brand');
             if (mainNavBrand) mainNavBrand.style.opacity = '1';
-            preloader.remove();
-            sessionStorage.setItem('preloaderShown', 'true');
-          }, 2000);
-          
+            
+            const targetRect = mainNavBrand.getBoundingClientRect();
+            const sourceCrest = document.getElementById('preloader-crest');
+            const sourceRect = sourceCrest.getBoundingClientRect();
+            const contentRect = content.getBoundingClientRect();
+            
+            content.style.filter = originalFilter;
+            
+            const targetWidth = 44; 
+            const sourceWidth = window.innerWidth <= 768 ? 100 : 150;
+            const scaleRatio = targetWidth / sourceWidth;
+            
+            const xMove = targetRect.left - (contentRect.left + (sourceRect.left - contentRect.left) * scaleRatio);
+            const yMove = targetRect.top - (contentRect.top + (sourceRect.top - contentRect.top) * scaleRatio);
+            
+            content.style.transform = `translate(${xMove}px, ${yMove}px) scale(${scaleRatio})`;
+          } catch(e) {
+            console.error(e);
+          } finally {
+            preloader.classList.add('fade-up');
+            setTimeout(endPreloader, 2000);
+          }
         }, 13000);
       });
     }
