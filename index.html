@@ -337,6 +337,13 @@
           }
         }, 13000);
       });
+    } else {
+      // Preloader already shown this session, hide it immediately
+      document.getElementById('preloader').style.display = 'none';
+      document.addEventListener('DOMContentLoaded', () => {
+        const mainNavBrand = document.getElementById('main-nav-brand');
+        if (mainNavBrand) mainNavBrand.style.opacity = '1';
+      });
     }
   </script>
 
