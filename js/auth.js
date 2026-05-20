@@ -25,12 +25,12 @@ window.ShowAlert = function(message) {
   
   // Message
   const text = document.createElement('p');
-  text.textContent = message;
+  text.innerHTML = message;
   text.style.cssText = 'font-family: "Inter", sans-serif; font-size: 16px; color: #333; line-height: 1.5; margin-bottom: 24px; font-weight: 500;';
   
   // Button
   const btn = document.createElement('button');
-  btn.textContent = 'Awesome';
+  btn.textContent = 'Return';
   btn.style.cssText = `
     background: #f57224; color: white; border: none; border-radius: 8px;
     padding: 12px 24px; font-size: 14px; font-weight: bold; cursor: pointer;
@@ -1087,27 +1087,52 @@ const Auth = {
     }
 
     try {
-      const res = await fetch('/api/auth-handler?action=register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      const data = await res.json();
-      
-      if (res.ok && data.success) {
-        this.currentUser = data.user;
-        localStorage.setItem('currentUser', JSON.stringify(this.currentUser));
-        window.ShowAlert('Registration Successful! Welcome ' + this.currentUser.name);
-        this.closeModal();
-        this.checkAuth();
+      if (isEmail) {
+        // Send OTP first
+        const res = await fetch('/api/auth-handler?action=signup-otp-send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: identifier })
+        });
+        const data = await res.json();
         
-        if (!this.currentUser.isVerified) {
-           this.checkVerification();
+        if (res.ok && data.success) {
+          // Store payload for step 2
+          this.signupPayload = payload;
+          document.getElementById('signupVerifyEmail').innerText = identifier;
+          this.showSignupVerify(null);
+          this.startSignupResendTimer();
+        } else if (data.error === 'ALREADY_EXISTS') {
+          window.ShowAlert(`This email is already registered.<br><br><button onclick="Auth.showLogin(event)" style="background: var(--c-gold); color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin-top: 15px;">Go to Sign in</button>`);
         } else {
-           window.location.href = '/portal.html';
+          window.ShowAlert(data.error || 'Failed to send verification code.');
         }
       } else {
-        window.ShowAlert(data.error || 'Registration Failed');
+        // Phone number registration (immediate)
+        const res = await fetch('/api/auth-handler?action=register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        
+        if (res.ok && data.success) {
+          this.currentUser = data.user;
+          localStorage.setItem('currentUser', JSON.stringify(this.currentUser));
+          window.ShowAlert('Registration Successful! Welcome ' + this.currentUser.name);
+          this.closeModal();
+          this.checkAuth();
+          
+          if (!this.currentUser.isVerified) {
+             this.checkVerification();
+          } else {
+             window.location.href = '/portal.html';
+          }
+        } else if (data.error === 'ALREADY_EXISTS') {
+          window.ShowAlert(`This phone number is already registered.<br><br><button onclick="Auth.showLogin(event)" style="background: var(--c-gold); color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin-top: 15px;">Go to Sign in</button>`);
+        } else {
+          window.ShowAlert(data.error || 'Registration Failed');
+        }
       }
     } catch(err) {
       window.ShowAlert("Network error occurred during registration.");
