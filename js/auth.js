@@ -663,6 +663,21 @@ const Auth = {
     input.focus();
   },
 
+  formatPhoneNumber(phone) {
+    let num = phone.replace(/[^0-9+]/g, ''); // strip spaces, dashes
+    if (num.startsWith('+')) return num;
+    
+    // Auto-detect Pakistani numbers starting with 03 or 3
+    if (num.startsWith('03') && num.length === 11) {
+      return '+92' + num.substring(1);
+    }
+    if (num.startsWith('3') && num.length === 10) {
+      return '+92' + num;
+    }
+    
+    return '+' + num;
+  },
+
   // Forgot Password Flow Handlers
   forgotPassword(e) {
     if (e) e.preventDefault();
@@ -737,8 +752,8 @@ const Auth = {
       // It's a Phone Number - Use Firebase Phone Auth
       this.setupRecaptcha();
       try {
-        // Format number if needed, assuming input contains full code like +923001234567
-        const phoneNumber = input.startsWith('+') ? input : '+' + input; 
+        // Format number if needed
+        const phoneNumber = this.formatPhoneNumber(input);
         const confirmationResult = await firebase.auth().signInWithPhoneNumber(phoneNumber, window.recaptchaVerifier);
         
         // Save confirmation result to verify later
@@ -960,7 +975,7 @@ const Auth = {
     this.setupRecaptcha();
     
     try {
-      const phoneNumber = phone.startsWith('+') ? phone : '+' + phone;
+      const phoneNumber = this.formatPhoneNumber(phone);
       const confirmationResult = await firebase.auth().signInWithPhoneNumber(phoneNumber, window.recaptchaVerifier);
       
       // We will re-use the forgot-verify screen for entering the OTP for signup/login as well
