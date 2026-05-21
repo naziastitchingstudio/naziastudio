@@ -65,6 +65,45 @@ window.ShowAlert = function(message) {
   overlay.onclick = (e) => { if(e.target === overlay) close(); };
 };
 
+
+window.ShowToast = function(message, type = 'error') {
+  const toast = document.createElement('div');
+  const bgColor = type === 'error' ? '#f44336' : '#4caf50';
+  toast.style.cssText = `
+    position: fixed; top: 20px; right: 20px; background: ${bgColor}; color: white;
+    padding: 16px 24px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    font-family: "Inter", sans-serif; font-size: 14px; font-weight: 500;
+    z-index: 10000; transform: translateX(120%); opacity: 0; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    display: flex; align-items: center; gap: 12px;
+  `;
+  
+  const icon = document.createElement('span');
+  icon.innerHTML = type === 'error' ? '⚠️' : '✅';
+  icon.style.fontSize = '18px';
+  
+  const text = document.createElement('span');
+  text.innerHTML = message;
+  
+  toast.appendChild(icon);
+  toast.appendChild(text);
+  document.body.appendChild(toast);
+  
+  requestAnimationFrame(() => {
+    toast.style.transform = 'translateX(0)';
+    toast.style.opacity = '1';
+  });
+  
+  setTimeout(() => {
+    toast.style.transform = 'translateX(120%)';
+    toast.style.opacity = '0';
+    setTimeout(() => {
+      if (document.body.contains(toast)) {
+        document.body.removeChild(toast);
+      }
+    }, 300);
+  }, 3000);
+};
+
 const Auth = {
   currentUser: null,
 
@@ -952,7 +991,7 @@ const Auth = {
     const val = el.value;
     const lenValid = val.length >= 8 && val.length <= 20;
     const charValid = /[a-zA-Z]/.test(val) && /[0-9]/.test(val) && /[~.!@#$%^&*<>]/.test(val);
-    const onlyValidSymbols = val.length > 0 && /^[a-zA-Z0-9~.!@#$%^&*<>]+$/.test(val);
+    const onlyValidSymbols = val.length > 0 && /[~.!@#$%^&*<>]/.test(val) && /^[a-zA-Z0-9~.!@#$%^&*<>]+$/.test(val);
 
     const cLen = document.getElementById('pw-criteria-len');
     const cChar = document.getElementById('pw-criteria-char');
@@ -1176,7 +1215,7 @@ const Auth = {
         window.ShowAlert('Registration Successful! Welcome ' + this.currentUser.name);
         window.location.href = '/portal.html';
       } else {
-        window.ShowAlert(data.error || "Incorrect OTP. Please enter a valid OTP.");
+        window.ShowToast(data.error || "Incorrect OTP. Please enter a valid OTP.", "error");
         const view = document.getElementById('view-signup-verify');
         view.classList.add('otp-shake');
         setTimeout(() => view.classList.remove('otp-shake'), 400);
