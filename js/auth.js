@@ -70,10 +70,10 @@ window.ShowToast = function(message, type = 'error') {
   const toast = document.createElement('div');
   const bgColor = type === 'error' ? '#f44336' : '#4caf50';
   toast.style.cssText = `
-    position: fixed; top: 20px; right: 20px; background: ${bgColor}; color: white;
+    position: fixed; top: 20px; left: 50%; background: ${bgColor}; color: white;
     padding: 16px 24px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     font-family: "Inter", sans-serif; font-size: 14px; font-weight: 500;
-    z-index: 10000; transform: translateX(120%); opacity: 0; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    z-index: 10000; transform: translate(-50%, -150%); opacity: 0; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     display: flex; align-items: center; gap: 12px;
   `;
   
@@ -89,12 +89,12 @@ window.ShowToast = function(message, type = 'error') {
   document.body.appendChild(toast);
   
   requestAnimationFrame(() => {
-    toast.style.transform = 'translateX(0)';
+    toast.style.transform = 'translate(-50%, 0)';
     toast.style.opacity = '1';
   });
   
   setTimeout(() => {
-    toast.style.transform = 'translateX(120%)';
+    toast.style.transform = 'translate(-50%, -150%)';
     toast.style.opacity = '0';
     setTimeout(() => {
       if (document.body.contains(toast)) {
@@ -895,7 +895,15 @@ const Auth = {
           this.forgotContext.token = data.token;
           this.showForgotReset(null);
         } else {
-          window.ShowAlert(data.error || "Invalid verification code!");
+          window.ShowToast(data.error || "Invalid verification code!", "error");
+          const view = document.getElementById('view-forgot-verify');
+          if (view) {
+              view.classList.add('otp-shake');
+              setTimeout(() => view.classList.remove('otp-shake'), 400);
+              const inputs = view.querySelectorAll('.otp-box');
+              inputs.forEach(input => input.value = '');
+              if (inputs.length > 0) inputs[0].focus();
+          }
         }
       } catch(err) {
         window.ShowAlert("Network error occurred.");
@@ -941,8 +949,16 @@ const Auth = {
         
       } catch (error) {
         console.error(error);
-        window.ShowAlert("Invalid verification code!");
-      }
+        window.ShowToast(data.error || "Invalid verification code!", "error");
+          const view = document.getElementById('view-forgot-verify');
+          if (view) {
+              view.classList.add('otp-shake');
+              setTimeout(() => view.classList.remove('otp-shake'), 400);
+              const inputs = view.querySelectorAll('.otp-box');
+              inputs.forEach(input => input.value = '');
+              if (inputs.length > 0) inputs[0].focus();
+          }
+        }
     } } finally {
       this.setLoading(btn, false);
     }
