@@ -898,8 +898,11 @@ const Auth = {
           window.ShowToast(data.error || "Invalid verification code!", "error");
           const view = document.getElementById('view-forgot-verify');
           if (view) {
-              view.classList.add('otp-shake');
-              setTimeout(() => view.classList.remove('otp-shake'), 400);
+              const otpContainer = view.querySelector('.otp-container') || view;
+              otpContainer.classList.remove('otp-shake');
+              void otpContainer.offsetWidth; // force reflow
+              otpContainer.classList.add('otp-shake');
+              setTimeout(() => otpContainer.classList.remove('otp-shake'), 400);
               const inputs = view.querySelectorAll('.otp-box');
               inputs.forEach(input => input.value = '');
               if (inputs.length > 0) inputs[0].focus();
@@ -952,8 +955,11 @@ const Auth = {
         window.ShowToast(data.error || "Invalid verification code!", "error");
           const view = document.getElementById('view-forgot-verify');
           if (view) {
-              view.classList.add('otp-shake');
-              setTimeout(() => view.classList.remove('otp-shake'), 400);
+              const otpContainer = view.querySelector('.otp-container') || view;
+              otpContainer.classList.remove('otp-shake');
+              void otpContainer.offsetWidth; // force reflow
+              otpContainer.classList.add('otp-shake');
+              setTimeout(() => otpContainer.classList.remove('otp-shake'), 400);
               const inputs = view.querySelectorAll('.otp-box');
               inputs.forEach(input => input.value = '');
               if (inputs.length > 0) inputs[0].focus();
@@ -1233,8 +1239,11 @@ const Auth = {
       } else {
         window.ShowToast(data.error || "Incorrect OTP. Please enter a valid OTP.", "error");
         const view = document.getElementById('view-signup-verify');
-        view.classList.add('otp-shake');
-        setTimeout(() => view.classList.remove('otp-shake'), 400);
+        const otpContainer = view.querySelector('.otp-container') || view;
+              otpContainer.classList.remove('otp-shake');
+              void otpContainer.offsetWidth; // force reflow
+              otpContainer.classList.add('otp-shake');
+              setTimeout(() => otpContainer.classList.remove('otp-shake'), 400);
         const inputs = view.querySelectorAll('.otp-box');
         inputs.forEach(input => input.value = '');
         inputs[0].focus();
