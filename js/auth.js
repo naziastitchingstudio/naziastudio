@@ -360,16 +360,16 @@ const Auth = {
                 <form onsubmit="Auth.handleForgotReset(event)" style="display: flex; flex-direction: column; flex-grow: 1; width: 100%;">
                   <div style="font-size: 14px; font-weight: 500; color: #333; margin-bottom: 8px;">New Password</div>
                   <div class="auth-input-group" style="width: 100%;">
-                    <input type="password" id="forgotNewPassword" class="auth-input" placeholder="Enter new password" style="width: 100%; box-sizing: border-box;" required>
+                    <input type="password" id="forgotNewPassword" class="auth-input" placeholder="Enter new password" style="width: 100%; box-sizing: border-box;" required oninput="Auth.handlePasswordValidation(this)">
                     <button type="button" class="auth-eye" onclick="Auth.togglePassword('forgotNewPassword')">
                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 36 36" width="24" height="24" stroke="currentColor" stroke-width="2.54" stroke-linecap="round" stroke-linejoin="round"><path d="M32.711 11c-3.166 4.841-8.573 8.03-14.71 8.03-6.139 0-11.546-3.189-14.712-8.03M9.79 17.5l-3 5m8.5-3-1 5.5m12.5-7.5 3 5m-8.5-3 1 5.5"></path></svg>
                     </button>
                   </div>
                   
-                  <ul class="password-validation-list">
-                    <li>The length of Password should be 8 - 20 characters.</li>
-                    <li>Password should contain alphabets, numbers and special characters</li>
-                    <li>Password can only include ~.!@#$%^&*<> symbols</li>
+                  <ul class="password-validation-list" style="transition: color 0.3s ease;">
+                    <li id="pw-criteria-len">The length of Password should be 8 - 20 characters.</li>
+                    <li id="pw-criteria-char">Password should contain alphabets, numbers and special characters</li>
+                    <li id="pw-criteria-sym">Password can only include ~.!@#$%^&*<> symbols</li>
                   </ul>
                   
                   <div style="display: flex; gap: 12px; margin-top: auto; padding-bottom: 16px; width: 100%;">
@@ -394,7 +394,7 @@ const Auth = {
                     <path d="M9 12l2 2 4-4" stroke="#1a9cb7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                   </svg>
                 </div>
-                <h4 style="font-size: 16px; color: #333; margin-bottom: 40px;">Your password has been reset successfully</h4>
+                <h4 style="font-family: 'Inter', sans-serif; font-size: 18px; font-weight: 500; color: #333; margin-bottom: 40px; text-align: center; line-height: 1.5;">Your password has been reset successfully!</h4>
                 
                 <div style="display: flex; margin-top: auto; padding-bottom: 16px; width: 100%;">
                   <button type="button" class="btn-forgot-action solid" style="flex: 1; padding: 12px;" onclick="Auth.finishForgotSuccess()">Go Shopping</button>
@@ -913,6 +913,16 @@ const Auth = {
     e.preventDefault();
     const newPassword = document.getElementById('forgotNewPassword').value;
 
+    // Password Criteria Validation
+    const lenValid = newPassword.length >= 8 && newPassword.length <= 20;
+    const charValid = /[a-zA-Z]/.test(newPassword) && /[0-9]/.test(newPassword) && /[~.!@#$%^&*<>]/.test(newPassword);
+    const onlyValidSymbols = /^[a-zA-Z0-9~.!@#$%^&*<>]+$/.test(newPassword);
+
+    if (!lenValid || !charValid || !onlyValidSymbols) {
+      window.ShowAlert("Please ensure your password meets all the required criteria.");
+      return;
+    }
+
     const btn = e.target.querySelector('button[type="submit"]');
     this.setLoading(btn, true);
 
@@ -936,6 +946,21 @@ const Auth = {
     } finally {
       this.setLoading(btn, false);
     }
+  },
+
+  handlePasswordValidation(el) {
+    const val = el.value;
+    const lenValid = val.length >= 8 && val.length <= 20;
+    const charValid = /[a-zA-Z]/.test(val) && /[0-9]/.test(val) && /[~.!@#$%^&*<>]/.test(val);
+    const onlyValidSymbols = val.length > 0 && /^[a-zA-Z0-9~.!@#$%^&*<>]+$/.test(val);
+
+    const cLen = document.getElementById('pw-criteria-len');
+    const cChar = document.getElementById('pw-criteria-char');
+    const cSym = document.getElementById('pw-criteria-sym');
+
+    if (cLen) cLen.style.color = lenValid ? '#4caf50' : '';
+    if (cChar) cChar.style.color = charValid ? '#4caf50' : '';
+    if (cSym) cSym.style.color = onlyValidSymbols ? '#4caf50' : '';
   },
 
   finishForgotSuccess() {
@@ -1152,7 +1177,10 @@ const Auth = {
         window.location.href = '/portal.html';
       } else {
         window.ShowAlert(data.error || "Incorrect OTP. Please enter a valid OTP.");
-        const inputs = document.getElementById('view-signup-verify').querySelectorAll('.otp-box');
+        const view = document.getElementById('view-signup-verify');
+        view.classList.add('otp-shake');
+        setTimeout(() => view.classList.remove('otp-shake'), 400);
+        const inputs = view.querySelectorAll('.otp-box');
         inputs.forEach(input => input.value = '');
         inputs[0].focus();
       }
