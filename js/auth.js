@@ -839,7 +839,7 @@ const Auth = {
       
       if (res.ok && data.success) {
         if (data.method === 'whatsapp') {
-           window.ShowAlert(`${data.message}<br><br><a href="https://wa.me/923008771713?text=Hi, I need to reset my password for phone number: ${input}" target="_blank" style="background: #25D366; color: white; padding: 10px 20px; border-radius: 4px; text-decoration: none; display: inline-block; margin-top: 15px;">Reset via WhatsApp</a>`);
+           window.ShowAlert(`${data.message}<br><br><a href="https://wa.me/923106845085?text=Hi, I need to reset my password for phone number: ${input}" target="_blank" style="background: #25D366; color: white; padding: 10px 20px; border-radius: 4px; text-decoration: none; display: inline-block; margin-top: 15px;">Reset via WhatsApp</a>`);
         } else {
            document.getElementById('forgotVerifyTarget').innerText = input;
            document.getElementById('forgotVerifyEmail').innerText = input;
@@ -1274,7 +1274,7 @@ const Auth = {
         <div style="background: white; padding: 32px; border-radius: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); width: 90%; max-width: 400px; text-align: center;">
           <h3 style="margin-top:0;">WhatsApp Verification Required</h3>
           <p style="color: #666; line-height: 1.5; margin-bottom: 24px;">Your account needs to be verified by our team before you can place orders. Please click below to send us a message on WhatsApp so we can verify your account.</p>
-          <a href="https://wa.me/923008771713?text=Hi, I would like to verify my account. Email/Phone: ${accountIdentifier}" target="_blank" style="background: #25D366; color: white; border: none; border-radius: 8px; padding: 12px 24px; font-size: 14px; font-weight: bold; cursor: pointer; display: inline-block; text-decoration: none; width: 100%; box-sizing: border-box; margin-bottom: 12px;">Verify via WhatsApp</a>
+          <a href="https://wa.me/923106845085?text=Hi, I would like to verify my account. Email/Phone: ${accountIdentifier}" target="_blank" style="background: #25D366; color: white; border: none; border-radius: 8px; padding: 12px 24px; font-size: 14px; font-weight: bold; cursor: pointer; display: inline-block; text-decoration: none; width: 100%; box-sizing: border-box; margin-bottom: 12px;">Verify via WhatsApp</a>
           <button onclick="document.getElementById('verificationModal').remove()" style="background: transparent; color: #666; border: none; cursor: pointer; text-decoration: underline; padding: 8px;">I'll do it later</button>
         </div>
       `;
