@@ -1260,6 +1260,19 @@ const Auth = {
     }
   },
 
+  redirectToSignup(e) {
+    if (e) e.preventDefault();
+    this.currentUser = null;
+    localStorage.removeItem('currentUser');
+    this.checkAuth();
+    const vModal = document.getElementById('verificationModal');
+    if (vModal) vModal.remove();
+    this.openModal();
+    setTimeout(() => {
+      this.showSignup(null);
+    }, 50);
+  },
+
   showVerificationModal() {
     let vModal = document.getElementById('verificationModal');
     if (!vModal) {
@@ -1272,10 +1285,13 @@ const Auth = {
       const accountIdentifier = this.currentUser.email || this.currentUser.phone || "my account";
       vModal.innerHTML = `
         <div style="background: white; padding: 32px; border-radius: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); width: 90%; max-width: 400px; text-align: center;">
-          <h3 style="margin-top:0;">WhatsApp Verification Required</h3>
-          <p style="color: #666; line-height: 1.5; margin-bottom: 24px;">Your account needs to be verified by our team before you can place orders. Please click below to send us a message on WhatsApp so we can verify your account.</p>
-          <a href="https://wa.me/923106845085?text=Hi, I would like to verify my account. Email/Phone: ${accountIdentifier}" target="_blank" style="background: #25D366; color: white; border: none; border-radius: 8px; padding: 12px 24px; font-size: 14px; font-weight: bold; cursor: pointer; display: inline-block; text-decoration: none; width: 100%; box-sizing: border-box; margin-bottom: 12px;">Verify via WhatsApp</a>
-          <button onclick="document.getElementById('verificationModal').remove()" style="background: transparent; color: #666; border: none; cursor: pointer; text-decoration: underline; padding: 8px;">I'll do it later</button>
+          <h3 style="margin-top:0; font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 700; color: #0d2247; margin-bottom: 12px;">WhatsApp Verification Required</h3>
+          <p style="color: #666; line-height: 1.6; margin-bottom: 24px; font-family: 'Inter', sans-serif; font-size: 14px;">Your account needs to be verified by our team before you can place orders. Please click below to send us a message on WhatsApp so we can verify your account.</p>
+          <a href="https://wa.me/923106845085?text=Hi, I would like to verify my account. Email/Phone: ${accountIdentifier}" target="_blank" style="background: #25D366; color: white; border: none; border-radius: 8px; padding: 14px 24px; font-size: 15px; font-weight: bold; cursor: pointer; display: inline-block; text-decoration: none; width: 100%; box-sizing: border-box; margin-bottom: 20px; transition: background 0.3s; font-family: 'Inter', sans-serif;">Verify via WhatsApp</a>
+          <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; border-top: 1px solid #eaeaea; padding-top: 16px;">
+            <button onclick="document.getElementById('verificationModal').remove()" style="background: transparent; color: #666; border: none; cursor: pointer; text-decoration: underline; padding: 8px; font-size: 13px; font-weight: 500; font-family: 'Inter', sans-serif;">I'll do it later</button>
+            <a href="#" onclick="Auth.redirectToSignup(event)" style="background: transparent; color: var(--c-primary, #0d2247); border: none; cursor: pointer; text-decoration: underline; padding: 8px; font-size: 13px; font-weight: 600; font-family: 'Inter', sans-serif;">Or Sign up with email</a>
+          </div>
         </div>
       `;
       document.body.appendChild(vModal);
