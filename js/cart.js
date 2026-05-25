@@ -19,10 +19,10 @@ const Cart = {
         </div>
         <p style="font-size: var(--fs-xs); color: var(--c-text-muted); margin-bottom: var(--sp-6); text-align: center;">Shipping & taxes calculated at checkout.</p>
         <a href="cart.html" class="btn btn-gold" style="width: 100%; margin-bottom: var(--sp-3); display: flex; align-items: center; justify-content: center;">View Full Cart</a>
-        <a href="checkout.html" class="btn btn-primary" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;">
+        <button onclick="Cart.handleDrawerCheckout()" class="btn btn-primary" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; border: none; cursor: pointer;">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
           Secure Checkout
-        </a>
+        </button>
       </div>
     </div>
   `,
@@ -253,6 +253,22 @@ const Cart = {
       toast.style.transition = 'opacity 0.3s ease';
       setTimeout(() => toast.remove(), 300);
     }, 2500);
+  },
+
+  handleDrawerCheckout() {
+    // Guard: if the logged-in user is unverified, show verification modal
+    if (typeof Auth !== 'undefined' && Auth.currentUser && !Auth.currentUser.isVerified) {
+      this.toggleDrawer(); // close drawer first
+      Auth.showVerificationModal();
+      return;
+    }
+    // Not logged in: close drawer and prompt login
+    if (typeof Auth !== 'undefined' && !Auth.currentUser) {
+      this.toggleDrawer();
+      Auth.openModal();
+      return;
+    }
+    window.location.href = 'checkout.html';
   }
 };
 

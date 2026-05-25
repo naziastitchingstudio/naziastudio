@@ -574,10 +574,9 @@ const Auth = {
 
   startSignupResendTimer() {
     let timeLeft = 60;
-    const timerElement = document.getElementById('signupResendTimer');
     const wrapper = document.getElementById('signupResendWrapper');
     
-    if (!timerElement || !wrapper) return;
+    if (!wrapper) return;
     
     wrapper.innerHTML = `Resend OTP in <span id="signupResendTimer" style="color: #00bcd4; font-weight: bold;">${timeLeft}</span> s`;
     

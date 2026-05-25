@@ -160,10 +160,10 @@
             <span>Total</span><span id="cart-total">Rs. 0</span>
           </div>
 
-          <a href="checkout.html" class="btn btn-gold mt-8" style="width: 100%; height: 55px; font-size: var(--fs-lg); display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: var(--sh-md);">
+          <button id="cartCheckoutBtn" onclick="handleCartCheckout()" class="btn btn-gold mt-8" style="width: 100%; height: 55px; font-size: var(--fs-lg); display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: var(--sh-md); border: none; cursor: pointer;">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
             Secure Checkout
-          </a>
+          </button>
           
           <div class="trust-badge">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
@@ -284,6 +284,20 @@
     
     function removeItem(index) {
       Cart.removeItem(index);
+    }
+
+    function handleCartCheckout() {
+      // Guard: if the logged-in user is unverified, show verification modal instead
+      if (typeof Auth !== 'undefined' && Auth.currentUser && !Auth.currentUser.isVerified) {
+        Auth.showVerificationModal();
+        return;
+      }
+      // Not logged in: prompt login first
+      if (typeof Auth !== 'undefined' && !Auth.currentUser) {
+        Auth.openModal();
+        return;
+      }
+      window.location.href = 'checkout.html';
     }
 
     document.addEventListener('DOMContentLoaded', () => {

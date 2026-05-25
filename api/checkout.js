@@ -1,10 +1,36 @@
-const { getCollection } = require('../utils/db');
+const { getCollection } = require('../lib/db');
 const nodemailer = require('nodemailer');
+const jwt = require('jsonwebtoken');
+const { parse } = require('cookie');
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   
   try {
+    // --- VERIFICATION GUARD ---
+    // Reject orders from unverified accounts, even if frontend is bypassed
+    const cookies = parse(req.headers.cookie || '');
+    const token = cookies.auth_token;
+    if (token) {
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'dev-secret-key-do-not-use-in-prod');
+        const usersCol = await getCollection('users');
+        const pendingCol = await getCollection('pending');
+        if (usersCol && pendingCol) {
+          const inUsers = await usersCol.findOne({ ID: decoded.id });
+          if (!inUsers) {
+            const inPending = await pendingCol.findOne({ ID: decoded.id });
+            if (inPending) {
+              return res.status(403).json({ error: 'ACCOUNT_UNVERIFIED', message: 'Your account must be verified before placing an order.' });
+            }
+          }
+        }
+      } catch (jwtErr) {
+        // Invalid token - continue, the customer details validation below will handle anonymous attempts
+      }
+    }
+    // --- END VERIFICATION GUARD ---
+
     const { items, total, customer, paymentMethod } = req.body;
     
     if (!items || items.length === 0) {

@@ -487,6 +487,10 @@
 
     document.getElementById('modalBuyNowBtn').addEventListener('click', () => {
       if(!currentModalItem) return;
+      if (typeof Auth !== 'undefined' && Auth.currentUser && !Auth.currentUser.isVerified) {
+        Auth.showVerificationModal();
+        return;
+      }
       const size = document.getElementById('modalSizeSelect').value;
       Cart.clearCart();
       Cart.addItem({ ...currentModalItem, size });
@@ -500,6 +504,10 @@
 
     // Direct Buy function for clicking titles
     function buyItemNow(title, price, category, imgUrl) {
+      if (typeof Auth !== 'undefined' && Auth.currentUser && !Auth.currentUser.isVerified) {
+        Auth.showVerificationModal();
+        return;
+      }
       Cart.clearCart();
       Cart.addItem({ title, price, category, image: imgUrl, size: 'Standard' });
       window.location.href = 'checkout.html';
