@@ -17,23 +17,45 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: 'Phone number is required' });
     }
 
-    const collection = await getCollection('users');
-    if (!collection) return res.status(500).json({ error: 'Database configuration missing' });
+    const usersCollection = await getCollection('users');
+    const pendingCollection = await getCollection('pending');
+    if (!usersCollection || !pendingCollection) return res.status(500).json({ error: 'Database configuration missing' });
 
-    // Format phone just in case (ensure + sign is there if provided without it)
-    let searchPhone = phone;
-    if (!searchPhone.startsWith('+')) searchPhone = '+' + searchPhone;
-
-    const result = await collection.updateOne(
-      { Phone: searchPhone },
-      { $set: { isVerified: true } }
-    );
-
-    if (result.matchedCount === 0) {
-      return res.status(404).json({ error: 'User not found with this phone number' });
+    // Try finding by exact match or formatted phone
+    let searchVal = phone.trim();
+    let formattedPhone = searchVal;
+    if (!searchVal.includes('@') && !searchVal.startsWith('+')) {
+      formattedPhone = '+' + searchVal;
     }
 
-    res.status(200).json({ success: true, message: `User ${searchPhone} successfully verified.` });
+    const userRow = await pendingCollection.findOne({
+      $or: [
+        { Phone: searchVal },
+        { Phone: formattedPhone },
+        { Email: searchVal }
+      ]
+    });
+
+    if (!userRow) {
+      const alreadyVerified = await usersCollection.findOne({
+        $or: [
+          { Phone: searchVal },
+          { Phone: formattedPhone },
+          { Email: searchVal }
+        ]
+      });
+      if (alreadyVerified) {
+        return res.status(200).json({ success: true, message: `User is already verified.` });
+      }
+      return res.status(404).json({ error: 'User not found in pending verifications.' });
+    }
+
+    // Move to users collection and set isVerified: true
+    await pendingCollection.deleteOne({ _id: userRow._id });
+    const verifiedUser = { ...userRow, isVerified: true };
+    await usersCollection.insertOne(verifiedUser);
+
+    res.status(200).json({ success: true, message: `User ${searchVal} successfully verified.` });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Database Error: ' + err.message });

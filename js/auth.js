@@ -1180,13 +1180,13 @@ const Auth = {
         if (res.ok && data.success) {
           this.currentUser = data.user;
           localStorage.setItem('currentUser', JSON.stringify(this.currentUser));
-          window.ShowAlert('Registration Successful! Welcome ' + this.currentUser.name);
           this.closeModal();
           this.checkAuth();
           
           if (!this.currentUser.isVerified) {
              this.checkVerification();
           } else {
+             window.ShowAlert('Registration Successful! Welcome ' + this.currentUser.name);
              window.location.href = '/portal.html';
           }
         } else if (data.error === 'ALREADY_EXISTS') {
@@ -1234,8 +1234,15 @@ const Auth = {
         this.currentUser = data.user;
         localStorage.setItem('currentUser', JSON.stringify(this.currentUser));
         document.dispatchEvent(new CustomEvent('authStateChanged', { detail: this.currentUser }));
-        window.ShowAlert('Registration Successful! Welcome ' + this.currentUser.name);
-        window.location.href = '/portal.html';
+        this.closeModal();
+        this.checkAuth();
+        
+        if (!this.currentUser.isVerified) {
+           this.checkVerification();
+        } else {
+           window.ShowAlert('Registration Successful! Welcome ' + this.currentUser.name);
+           window.location.href = '/portal.html';
+        }
       } else {
         window.ShowToast(data.error || "Incorrect OTP. Please enter a valid OTP.", "error");
         const view = document.getElementById('view-signup-verify');
@@ -1262,6 +1269,7 @@ const Auth = {
 
   redirectToSignup(e) {
     if (e) e.preventDefault();
+    if (window.CloseAlert) window.CloseAlert(); // Dismiss underlying welcome alerts!
     this.currentUser = null;
     localStorage.removeItem('currentUser');
     this.checkAuth();
@@ -1274,6 +1282,7 @@ const Auth = {
   },
 
   showVerificationModal() {
+    if (window.CloseAlert) window.CloseAlert(); // Dismiss underlying welcome alerts!
     let vModal = document.getElementById('verificationModal');
     if (!vModal) {
       vModal = document.createElement('div');
