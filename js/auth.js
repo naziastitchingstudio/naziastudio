@@ -844,8 +844,15 @@ const Auth = {
 
   async handleForgotRequest(e) {
     e.preventDefault();
-    const input = document.getElementById('forgotInput').value;
-    if (!input) return;
+    const rawInput = document.getElementById('forgotInput').value;
+    if (!rawInput) return;
+
+    let input = rawInput.trim();
+    if (!input.includes('@')) {
+      input = this.formatPhoneNumber(input);
+    } else {
+      input = input.toLowerCase();
+    }
 
     const btn = e.target.querySelector('button[type="submit"]');
     this.setLoading(btn, true);
