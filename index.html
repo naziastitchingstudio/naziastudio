@@ -273,27 +273,35 @@
           span.textContent = textToSplit[i];
           // Randomize direction: left or right
           const isLeft = Math.random() > 0.5;
-          const delay = 4.5 + (i * 0.1);
+          // Delay: text box starts opening at 3.2s, fully open ~4.2s
+          // Letters start appearing from 5.0s onward
+          const delay = 5.0 + (i * 0.1);
           span.style.animation = `danceIn${isLeft ? 'Left' : 'Right'} 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards ${delay}s`;
           subtitle.appendChild(span);
         }
         
-        // Trigger Phase 2 (Text Reveal)
+        // Trigger Phase 2a (Text Reveal) — letters begin dancing in
         setTimeout(() => {
           content.classList.add('run-dance');
         }, 100);
 
-        // Trigger Crest Flip (After N is placed)
+        // Phase 2b: Smoothly slide crest left & open text box
+        // The CSS transition on max-width + opacity does the smooth glide
+        setTimeout(() => {
+          content.classList.add('run-reveal-text');
+        }, 3200);
+
+        // Phase 2c: Start crest flip (slightly after text box begins opening)
         setTimeout(() => {
           content.classList.add('run-flip');
-        }, 3500);
+        }, 3700);
 
-        // Phase 3: Lock and Shine for 4 sec (After text finishes)
+        // Phase 3: Lock and Shine (after all subtitle letters land ~6.6s + buffer)
         setTimeout(() => {
           content.classList.add('run-shine');
           // Clear inline animations to allow shine CSS to apply
           subtitle.querySelectorAll('span').forEach(s => s.style.animation = '');
-        }, 7000);
+        }, 7800);
 
         let preloaderEnded = false;
         const endPreloader = () => {
@@ -305,8 +313,8 @@
           sessionStorage.setItem('preloaderShown', 'true');
         };
 
-        // Hard fallback: force-end preloader after 16s no matter what
-        setTimeout(endPreloader, 16000);
+        // Hard fallback: force-end preloader after 18s no matter what
+        setTimeout(endPreloader, 18000);
 
         // Phase 4: Transition to Navbar (6 seconds after shine starts)
         setTimeout(() => {
@@ -318,7 +326,8 @@
             const mainNavBrand = document.getElementById('main-nav-brand');
             if (mainNavBrand) mainNavBrand.style.opacity = '1';
             
-            const targetRect = mainNavBrand.getBoundingClientRect();
+            const brandIcon = mainNavBrand ? mainNavBrand.querySelector('.brand-icon') : null;
+            const targetRect = brandIcon ? brandIcon.getBoundingClientRect() : mainNavBrand.getBoundingClientRect();
             const sourceCrest = document.getElementById('preloader-crest');
             const sourceRect = sourceCrest.getBoundingClientRect();
             const contentRect = content.getBoundingClientRect();
@@ -339,7 +348,7 @@
             preloader.classList.add('fade-up');
             setTimeout(endPreloader, 2000);
           }
-        }, 13000);
+        }, 14000);
       });
     } else {
       // Preloader already shown this session, hide it immediately
