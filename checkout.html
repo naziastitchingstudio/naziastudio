@@ -216,7 +216,7 @@
               <p style="color: var(--c-text-sub); line-height: 1.6; font-size: 14px; margin-bottom: 30px; font-family: 'Inter', sans-serif;">
                 Your account is unverified. To protect your orders and prevent fraudulent activity, unverified accounts cannot place orders. Please click below to verify your account via WhatsApp.
               </p>
-              <a href="https://wa.me/923106845085?text=Hi, I would like to verify my account. Email/Phone: ${user.email || user.phone}" target="_blank" style="background: #25D366; color: white; border: none; border-radius: 8px; padding: 14px 28px; font-size: 15px; font-weight: bold; cursor: pointer; display: inline-block; text-decoration: none; width: 100%; box-sizing: border-box; margin-bottom: 24px; transition: background 0.3s; font-family: 'Inter', sans-serif;">Verify via WhatsApp</a>
+              <a href="https://wa.me/923106845085?text=${encodeURIComponent('Hi, I would like to verify my account.\n\nEmail/Phone: ' + (user.email || user.phone || 'N/A') + '\n\nPlease verify my account so I can place my order. Thank you!')}" target="_blank" style="background: #25D366; color: white; border: none; border-radius: 8px; padding: 14px 28px; font-size: 15px; font-weight: bold; cursor: pointer; display: inline-block; text-decoration: none; width: 100%; box-sizing: border-box; margin-bottom: 24px; transition: background 0.3s; font-family: 'Inter', sans-serif;">Verify via WhatsApp</a>
               <div style="border-top: 1px solid #eaeaea; padding-top: 20px;">
                 <a href="cart.html" style="color: var(--c-primary); text-decoration: underline; font-size: 14px; font-weight: 500; font-family: 'Inter', sans-serif;">Return to Cart</a>
               </div>

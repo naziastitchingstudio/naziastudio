@@ -156,6 +156,9 @@ const Cart = {
   addItem(item) {
     const cart = this.getCart();
     
+    // Normalize size before comparison
+    item.size = item.size || 'Standard';
+    
     // Add mock details for luxury breakdown
     item.serviceType = item.category === 'Bespoke' || item.size === 'Custom Measurement' ? 'Full Stitching' : 'Ready-to-Wear';
     
