@@ -125,29 +125,23 @@ const Auth = {
       }, 500);
     }
 
-    // Check for OAuth success
+    // Check for OAuth success OR logged-out redirect
     const urlParams = new URLSearchParams(window.location.search);
+
     if (urlParams.get('login') === 'success') {
+      // ── OAuth callback: fetch session from server and store ──────────────
       fetch('/api/auth-handler?action=me')
         .then(async res => {
           const text = await res.text();
-          try {
-            return JSON.parse(text);
-          } catch (e) {
-            throw new Error(`API Error (${res.status}): ` + text.substring(0, 150));
-          }
+          try { return JSON.parse(text); }
+          catch (e) { throw new Error(`API Error (${res.status}): ` + text.substring(0, 150)); }
         })
         .then(data => {
           if (data.authenticated && data.user) {
             this.currentUser = data.user;
             localStorage.setItem('currentUser', JSON.stringify(data.user));
             this.checkAuth();
-            
-            // Clean up URL
             window.history.replaceState({}, document.title, window.location.pathname);
-            
-            // Redirect to dashboard
-            window.location.href = '/portal.html';
             window.location.href = '/portal.html';
           } else {
             window.ShowAlert('Session check failed: ' + JSON.stringify(data));
@@ -157,17 +151,20 @@ const Auth = {
           console.error('Error fetching session:', err);
           window.ShowAlert('Network error checking session');
         });
-    } else {
-      // Skip proactive session sync if the user just logged out — prevents cookie re-read race condition
-      if (sessionStorage.getItem('nss_logged_out')) {
-        sessionStorage.removeItem('nss_logged_out');
-        this.currentUser = null;
-        localStorage.removeItem('currentUser');
-        this.checkAuth();
-        return;
-      }
 
-      // Proactively refresh session on page load to sync verification status
+    } else if (urlParams.get('logged_out') === '1' || sessionStorage.getItem('nss_logged_out')) {
+      // ── Post-logout load: skip /me entirely, ensure clean state ──────────
+      sessionStorage.removeItem('nss_logged_out');
+      this.currentUser = null;
+      localStorage.removeItem('currentUser');
+      // Clean the URL so F5 won't re-trigger this branch forever
+      if (urlParams.get('logged_out') === '1') {
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+      this.checkAuth();
+
+    } else {
+      // ── Normal page load: proactively sync session from server ───────────
       fetch('/api/auth-handler?action=me')
         .then(res => res.json())
         .then(data => {
@@ -1351,21 +1348,31 @@ const Auth = {
   },
 
   async logout() {
-    // Set flag FIRST so the proactive /me sync on next page load is blocked
+    // 1. Mark the session as logged-out so the proactive /me sync is skipped on next page load
     sessionStorage.setItem('nss_logged_out', '1');
 
+    // 2. Wipe every auth key from localStorage
     this.currentUser = null;
-    localStorage.removeItem('currentUser');
+    ['currentUser', 'rememberedEmail'].forEach(k => localStorage.removeItem(k));
 
+    // 3. Belt-and-suspenders: try to delete cookie client-side too
+    //    (works for non-httpOnly cookies; httpOnly ones are handled server-side)
+    document.cookie = 'auth_token=; Max-Age=0; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    document.cookie = 'auth_token=; Max-Age=0; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; Secure';
+
+    // 4. Tell server to expire the httpOnly cookie
     try {
       await fetch('/api/auth-handler?action=logout', { credentials: 'same-origin' });
     } catch (e) {
       console.error('Failed to log out from server:', e);
     }
 
-    // Hard redirect so the browser discards all in-memory cookie references
+    // 5. Show confirmation then hard-navigate (forces full browser reload with cleared cookies)
+    window.ShowAlert('You have successfully logged out.');
     const isProtectedPage = window.location.pathname.includes('portal.html') || window.location.pathname.includes('checkout.html');
-    window.location.href = isProtectedPage ? '/index.html' : window.location.pathname;
+    setTimeout(() => {
+      window.location.href = isProtectedPage ? '/index.html' : window.location.pathname + '?logged_out=1';
+    }, 1200);
   },
 
   checkAuth() {
