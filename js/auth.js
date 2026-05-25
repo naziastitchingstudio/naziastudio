@@ -157,6 +157,24 @@ const Auth = {
           console.error('Error fetching session:', err);
           window.ShowAlert('Network error checking session');
         });
+    } else {
+      // Proactively refresh session on page load to sync verification status
+      fetch('/api/auth-handler?action=me')
+        .then(res => res.json())
+        .then(data => {
+          if (data.authenticated && data.user) {
+            this.currentUser = data.user;
+            localStorage.setItem('currentUser', JSON.stringify(data.user));
+            this.checkAuth();
+          } else {
+            if (this.currentUser) {
+              this.currentUser = null;
+              localStorage.removeItem('currentUser');
+              this.checkAuth();
+            }
+          }
+        })
+        .catch(err => console.error('Error refreshing session:', err));
     }
   },
 
@@ -1316,11 +1334,19 @@ const Auth = {
     }
   },
 
-  logout() {
+  async logout() {
     this.currentUser = null;
     localStorage.removeItem('currentUser');
+    try {
+      await fetch('/api/auth-handler?action=logout');
+    } catch (e) {
+      console.error('Failed to log out from server:', e);
+    }
     window.ShowAlert('You have successfully logged out.');
     this.checkAuth();
+    if (window.location.pathname.includes('portal.html') || window.location.pathname.includes('checkout.html')) {
+      window.location.href = '/index.html';
+    }
   },
 
   checkAuth() {

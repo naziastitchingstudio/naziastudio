@@ -381,21 +381,77 @@
     }
     
     // Wire up the local forms to the Auth system
-    document.getElementById('login-form').addEventListener('submit', (e) => {
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const email = e.target.querySelector('input[type="email"]').value;
-      Auth.currentUser = { email: email, name: email.split('@')[0] };
-      localStorage.setItem('currentUser', JSON.stringify(Auth.currentUser));
-      Auth.checkAuth(); // Updates the UI and dispatches authStateChanged instantly
+      const password = e.target.querySelector('input[type="password"]').value;
+      
+      const btn = e.target.querySelector('button[type="submit"]');
+      Auth.setLoading(btn, true);
+      
+      try {
+        const res = await fetch('/api/auth-handler?action=login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+        
+        if (res.ok && data.success) {
+          Auth.currentUser = data.user;
+          localStorage.setItem('currentUser', JSON.stringify(Auth.currentUser));
+          window.ShowAlert('Login Successful! Welcome ' + Auth.currentUser.name);
+          Auth.checkAuth();
+        } else {
+          if (data.error === 'NOT_FOUND') {
+            window.ShowAlert(`The email or phone number you entered is not yet registered. Please sign up to register yourself.<br><br><button onclick="Auth.showSignup(event); if(window.CloseAlert) window.CloseAlert();" style="background: var(--c-gold); color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin-top: 15px;">Go to Sign Up</button>`);
+          } else if (data.error === 'WRONG_PASSWORD') {
+            window.ShowAlert("Incorrect password. Please try again.");
+          } else {
+            window.ShowAlert(data.error || 'Login Failed');
+          }
+        }
+      } catch(err) {
+        window.ShowAlert("Network error occurred during login.");
+      } finally {
+        Auth.setLoading(btn, false);
+      }
     });
     
-    document.getElementById('signup-form').addEventListener('submit', (e) => {
+    document.getElementById('signup-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const name = e.target.querySelector('input[type="text"]').value;
       const email = e.target.querySelector('input[type="email"]').value;
-      Auth.currentUser = { email: email, name: name };
-      localStorage.setItem('currentUser', JSON.stringify(Auth.currentUser));
-      Auth.checkAuth(); // Updates the UI and dispatches authStateChanged instantly
+      const password = e.target.querySelector('input[type="password"]').value;
+      
+      const btn = e.target.querySelector('button[type="submit"]');
+      Auth.setLoading(btn, true);
+      
+      try {
+        // Send OTP first
+        const res = await fetch('/api/auth-handler?action=signup-otp-send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email })
+        });
+        const data = await res.json();
+        
+        if (res.ok && data.success) {
+          Auth.signupPayload = { name, email, password };
+          Auth.openModal();
+          document.getElementById('signupVerifyEmail').innerText = email;
+          Auth.showSignupVerify(null);
+          Auth.startSignupResendTimer();
+        } else if (data.error === 'ALREADY_EXISTS') {
+          window.ShowAlert(`This email is already registered.<br><br><button onclick="Auth.showLogin(event); if(window.CloseAlert) window.CloseAlert();" style="background: var(--c-gold); color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin-top: 15px;">Go to Sign in</button>`);
+        } else {
+          window.ShowAlert(data.error || 'Failed to send verification code.');
+        }
+      } catch(err) {
+        window.ShowAlert("Network error occurred during signup.");
+      } finally {
+        Auth.setLoading(btn, false);
+      }
     });
   </script>
 </body>
