@@ -318,6 +318,9 @@ const Auth = {
                   <div style="font-size: 14px; color: #999; margin-top: 16px;" id="signupResendWrapper">
                     Resend OTP in <span id="signupResendTimer" style="color: #00bcd4; font-weight: bold;">60</span> s
                   </div>
+                  <div style="font-size: 11px; color: #777; margin-top: 8px;">
+                    (Please check your spam/junk folder before requesting a new code)
+                  </div>
                   
                   <div style="display: flex; gap: 12px; margin-top: auto; padding-bottom: 16px; width: 100%;">
                     <button type="button" class="btn-forgot-action outline" style="flex: 1;" onclick="Auth.showSignup(event); if(window.CloseAlert) window.CloseAlert();">Back</button>
@@ -378,6 +381,9 @@ const Auth = {
                   </div>
                   <div id="otpResendWrapper" style="margin-top: 16px; display: none;">
                     <a href="#" class="auth-link" style="font-size: 14px;" onclick="Auth.handleForgotRequest(event)">Click here to resend OTP</a>
+                  </div>
+                  <div style="font-size: 11px; color: #777; margin-top: 8px;">
+                    (Please check your spam/junk folder before requesting a new code)
                   </div>
                   
                   <div style="display: flex; gap: 12px; margin-top: auto; padding-bottom: 16px; width: 100%;">
@@ -845,7 +851,11 @@ const Auth = {
            this.showForgotVerify(null);
         }
       } else {
-        window.ShowAlert(data.error || "Failed to send reset request.");
+        if (data.error === 'ACCOUNT_NOT_FOUND') {
+          window.ShowAlert(`This account is not yet registered. Please sign up to register yourself.<br><br><button onclick="Auth.showSignup(event); if(window.CloseAlert) window.CloseAlert();" style="background: var(--c-gold); color: white; border: none; border-radius: 8px; padding: 12px 24px; font-size: 14px; font-weight: bold; cursor: pointer; width: 100%; margin-bottom: 8px; transition: background 0.3s;">Sign Up</button>`);
+        } else {
+          window.ShowAlert(data.error || "Failed to send reset request.");
+        }
       }
     } catch(err) {
       window.ShowAlert("Network error occurred.");
