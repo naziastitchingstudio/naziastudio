@@ -158,6 +158,15 @@ const Auth = {
           window.ShowAlert('Network error checking session');
         });
     } else {
+      // Skip proactive session sync if the user just logged out — prevents cookie re-read race condition
+      if (sessionStorage.getItem('nss_logged_out')) {
+        sessionStorage.removeItem('nss_logged_out');
+        this.currentUser = null;
+        localStorage.removeItem('currentUser');
+        this.checkAuth();
+        return;
+      }
+
       // Proactively refresh session on page load to sync verification status
       fetch('/api/auth-handler?action=me')
         .then(res => res.json())
@@ -1342,18 +1351,21 @@ const Auth = {
   },
 
   async logout() {
+    // Set flag FIRST so the proactive /me sync on next page load is blocked
+    sessionStorage.setItem('nss_logged_out', '1');
+
     this.currentUser = null;
     localStorage.removeItem('currentUser');
+
     try {
-      await fetch('/api/auth-handler?action=logout');
+      await fetch('/api/auth-handler?action=logout', { credentials: 'same-origin' });
     } catch (e) {
       console.error('Failed to log out from server:', e);
     }
-    window.ShowAlert('You have successfully logged out.');
-    this.checkAuth();
-    if (window.location.pathname.includes('portal.html') || window.location.pathname.includes('checkout.html')) {
-      window.location.href = '/index.html';
-    }
+
+    // Hard redirect so the browser discards all in-memory cookie references
+    const isProtectedPage = window.location.pathname.includes('portal.html') || window.location.pathname.includes('checkout.html');
+    window.location.href = isProtectedPage ? '/index.html' : window.location.pathname;
   },
 
   checkAuth() {
